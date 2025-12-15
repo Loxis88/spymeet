@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MeetSummator</title>
+  <style>
+    body { width: 320px; padding: 10px; font-family: sans-serif; }
+    input, button, textarea { width: 100%; margin-bottom: 10px; box-sizing: border-box; }
+    label { font-weight: bold; display: block; margin-bottom: 5px; }
+    .status { margin-top: 10px; font-size: 0.9em; color: #555; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h3>MeetSummator Config</h3>
+  
+  <label for="geminiKey">Gemini API Key:</label>
+  <input type="password" id="geminiKey" placeholder="Enter Gemini API Key">
+
+  <label for="telegramToken">Telegram Bot Token:</label>
+  <input type="password" id="telegramToken" placeholder="Enter Bot Token">
+
+  <label for="chatId">Telegram Chat ID:</label>
+  <input type="text" id="chatId" placeholder="Enter Chat ID">
+
+  <button id="saveBtn">Save Settings</button>
+  <div id="statusMsg" class="status"></div>
+
+  <hr>
+
+  <h3>Actions</h3>
+  <button id="startBtn">Start Recording</button>
+  <button id="stopBtn" disabled>Stop & Summarize</button>
+  
+  <div id="recordingStatus" class="status">Ready</div>
+
+  <hr>
+  <div style="margin-top: 15px;">
+    <button id="toggleLogsBtn" style="background-color: #f1f1f1; color: #333; border: 1px solid #ccc;">Show Debug Logs</button>
+    <div id="logsContainer" class="hidden">
+        <textarea id="debugLogs" rows="10" readonly style="font-family: monospace; font-size: 11px; white-space: pre;"></textarea>
+        <button id="clearLogsBtn" style="width: auto; padding: 5px 10px; font-size: 11px;">Clear Logs</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

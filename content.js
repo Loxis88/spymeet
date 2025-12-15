@@ -171,16 +171,28 @@ class CaptionCapturer {
         // Update logic: if the new text is an extension of the last line
         if (this.recentLines.length > 0) {
             const lastLine = this.recentLines[this.recentLines.length - 1];
+            const textLower = text.toLowerCase();
+            const lastLineLower = lastLine.toLowerCase();
 
+            // 1. Prefix Match (Extension) - Case Insensitive
             // "Hello" -> "Hello world"
-            if (text.startsWith(lastLine)) {
+            if (textLower.startsWith(lastLineLower)) {
                 this.transcript[this.transcript.length - 1] = `[${speaker}]: ${text}`;
                 this.recentLines[this.recentLines.length - 1] = text;
                 return;
             }
 
+            // 2. Fuzzy Match (Correction) - Simple Levenshtein-like or Overlap
+            // "The car is red" -> "The cat is red"
+            // If the strings are very similar (>80%), treat as update
+            if (this.isSimilar(lastLineLower, textLower)) {
+                 this.transcript[this.transcript.length - 1] = `[${speaker}]: ${text}`;
+                 this.recentLines[this.recentLines.length - 1] = text;
+                 return;
+            }
+
             // "Hello world" -> "Hello" (jitter)
-            if (lastLine.startsWith(text)) return;
+            if (lastLineLower.startsWith(textLower)) return;
         }
 
         // New line
@@ -191,6 +203,36 @@ class CaptionCapturer {
         if (this.recentLines.length > this.HISTORY_SIZE) {
             this.recentLines.shift();
         }
+    }
+
+    isSimilar(s1, s2) {
+        // Simple similarity check:
+        // 1. Length difference shouldn't be massive
+        if (Math.abs(s1.length - s2.length) > s1.length * 0.5) return false;
+
+        // 2. Common characters overlap (simplified) or Levenshtein
+        // Let's implement a quick Levenshtein for < 200 chars
+        if (s1.length > 200 || s2.length > 200) return false; // Fail safe
+
+        const track = Array(s2.length + 1).fill(null).map(() =>
+            Array(s1.length + 1).fill(null));
+        for (let i = 0; i <= s1.length; i += 1) { track[0][i] = i; }
+        for (let j = 0; j <= s2.length; j += 1) { track[j][0] = j; }
+        for (let j = 1; j <= s2.length; j += 1) {
+            for (let i = 1; i <= s1.length; i += 1) {
+                const indicator = s1[i - 1] === s2[j - 1] ? 0 : 1;
+                track[j][i] = Math.min(
+                    track[j][i - 1] + 1, // deletion
+                    track[j - 1][i] + 1, // insertion
+                    track[j - 1][i - 1] + indicator, // substitution
+                );
+            }
+        }
+        const dist = track[s2.length][s1.length];
+        const maxLength = Math.max(s1.length, s2.length);
+
+        // Allow up to 20% difference
+        return dist < (maxLength * 0.2);
     }
 }
 

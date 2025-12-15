@@ -53,6 +53,12 @@ function hideRecordingIndicator() {
     if (el) el.remove();
 }
 
+// Fast-fail tags to ignore immediately without processing
+const IGNORED_TAGS = new Set([
+    'SCRIPT', 'STYLE', 'NOSCRIPT', 'SVG', 'PATH', 'IMG', 'VIDEO', 'AUDIO',
+    'IFRAME', 'LINK', 'META', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'
+]);
+
 function startObserving() {
   // Broad observer on body to catch subtitle additions
   const targetNode = document.body;
@@ -82,6 +88,9 @@ function startObserving() {
 function extractTextFromNode(node) {
     if (!node) return;
 
+    // ⚡ PERFORMANCE: Cheap check to ignore non-content elements
+    if (IGNORED_TAGS.has(node.tagName)) return;
+
     // Generic Text Extraction Strategy
     // We observe all text node additions. 
     // If a text node is added, we check its parent.
@@ -90,7 +99,10 @@ function extractTextFromNode(node) {
     // NOTE: This will be noisy, but better than missing content.
     // We rely on the summarizer AI to filter out garbage.
     
-    const text = node.innerText || node.textContent;
+    // ⚡ PERFORMANCE: Use textContent instead of innerText to avoid reflow.
+    // innerText triggers a layout calculation on every access.
+    // textContent is raw but fast. We filter garbage later.
+    const text = node.textContent;
     if (!text) return;
     
     const cleanText = text.trim();
